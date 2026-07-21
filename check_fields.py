@@ -36,8 +36,10 @@ def extract_region(s, field):
 def contains_data(region):
     """Heuristic: does the value still hold real content (not just x's / structure)?"""
     inner = region[region.find('{') + 1: region.rfind('}')]
-    inner = re.sub(r'<[^>]*>', '', inner)          # drop <Unit>/<Precision> tags
-    inner = inner.replace('x', '').replace('X', '')  # drop blanked runs
+    inner = re.sub(r'<Unit>\s*"[^"]*"', '', inner)   # drop unit label, e.g. <Unit> "[mm]"
+    inner = re.sub(r'<Precision>\s*\d+', '', inner)  # drop precision spec, e.g. <Precision> 6
+    inner = re.sub(r'<[^>]*>', '', inner)          # drop any remaining tags
+    inner = inner.replace('x', '').replace('X', '').replace('0', '')  # drop blanked runs
     inner = re.sub(r'[^A-Za-z0-9]', '', inner)       # keep only alphanumerics
     return inner  # non-empty string => still has data
 

@@ -69,8 +69,10 @@ def anonymize(input_filename, output_filename, anon_str=None):
 def anonymize_field(data: bytes, field_name: str, replacement_char: str = "x") -> bytes:
     s = data.decode('latin-1')
 
+    # Keep an optional `<Unit> "..."` and/or `<Precision> N` so they and the unit string,
+    # e.g. "[mm]") are preserved; so only the value itself is blanked.
     pattern = re.compile(
-        r'(<Param\w+\."{}">\s*\{{\s*)(")?([^"}}]*)(")?(\s*\}})'.format(re.escape(field_name))
+        r'(<Param\w+\."{}">\s*\{{\s*(?:<Unit>\s*"[^"]*"\s*)?(?:<Precision>\s*\d+\s+)?)(")?([^"}}]*?)(")?(\s*\}})'.format(re.escape(field_name))
     )
 
     def repl(match):

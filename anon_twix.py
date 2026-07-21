@@ -70,7 +70,7 @@ def anonymize_field(data: bytes, field_name: str, replacement_char: str = "x") -
     s = data.decode('latin-1')
 
     pattern = re.compile(
-        r'(<Param\w+\."{}">\{{\s*)(")?([^"}}]*)(")?(\s*\}})'.format(re.escape(field_name))
+        r'(<Param\w+\."{}">\s*\{{\s*)(")?([^"}}]*)(")?(\s*\}})'.format(re.escape(field_name))
     )
 
     def repl(match):

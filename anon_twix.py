@@ -79,10 +79,7 @@ def anonymize_field(data: bytes, field_name: str, replacement_char: str = "x") -
         prefix, open_quote, value, close_quote, suffix = match.groups()
         open_quote = open_quote or ""
         close_quote = close_quote or ""
-        if open_quote:
-            new_value = replacement_char * len(value)  # string: same length, quotes untouched
-        else:
-            new_value = re.sub(r'\d', '0', value)  # number: zero the digits, keep '.' and '-'
+        new_value = replacement_char * len(value)  # same length, quotes untouched
         return prefix + open_quote + new_value + close_quote + suffix
 
     return pattern.sub(repl, s).encode('latin-1')

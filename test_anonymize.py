@@ -1,13 +1,13 @@
 """
-Simple test for anonymize_field() using a dummy twix header.
+Simple test for anonymize.py's anonymize_field() using a dummy twix header.
 
 No .dat file needed. Run it with:
-    python test_anon_twix.py
+    python test_anonymize.py
 """
 import re
 
-from anon_twix import anonymize_field
-from check_fields import FIELDS, extract_region, contains_data
+from anonymize import anonymize_field, ANON_STR
+from check_fields import extract_region, contains_data
 
 # A dummy hdr_str fragment with the field layouts seen in real VD/VE data.
 DUMMY_HEADER = (
@@ -27,6 +27,20 @@ DUMMY_HEADER = (
     '<ParamDouble."flPatientAge">        { <Precision> 6 35.000000 }\n'
 )
 
+# Edge layouts: several quoted strings / several numbers in one param.
+# (field, input, expected output)
+EDGE = [
+    ('StudyLOID',
+     '<ParamString."StudyLOID">    { "4.0.100000002" "4.0.100000003" }',
+     '<ParamString."StudyLOID">    { "xxxxxxxxxxxxx" "xxxxxxxxxxxxx" }'),
+    ('flPatientAge',
+     '<ParamDouble."flPatientAge"> { <Precision> 6 1.0 2.0 3.0 }',
+     '<ParamDouble."flPatientAge"> { <Precision> 6 0.0 0.0 0.0 }'),
+    ('lPatientSex',
+     '<ParamLong."lPatientSex">    { -1 }',
+     '<ParamLong."lPatientSex">    { -0 }'),
+]
+
 # Values that must not survive anonymization.
 SECRETS = ['70123456', '19850312', 'Doe^Jane', '4.0.100000001',
            'Example Hospital', 'Example Street', '123456',
@@ -35,7 +49,7 @@ SECRETS = ['70123456', '19850312', 'Doe^Jane', '4.0.100000001',
 
 def anonymize_header(header):
     raw = header.encode('latin-1')
-    for field in FIELDS:
+    for field in ANON_STR:
         raw = anonymize_field(raw, field)
     return raw.decode('latin-1')
 
@@ -64,10 +78,16 @@ def main():
         if empty not in out:
             failures.append(f"empty field changed: {empty}")
 
-    # 5. check_fields must report every field as clean
+    # 5. edge layouts: every quoted string / every number must be blanked
+    for field, raw, expected in EDGE:
+        got = anonymize_field(raw.encode('latin-1'), field).decode('latin-1')
+        if got != expected:
+            failures.append(f"{field}: got {got!r}, expected {expected!r}")
+
+    # 6. check_fields must report every field as clean
     print("field                after anonymization")
     print("-" * 70)
-    for field in FIELDS:
+    for field in ANON_STR:
         region = extract_region(out, field)
         if region is None:
             continue
